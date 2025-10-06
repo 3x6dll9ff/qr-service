@@ -154,9 +154,9 @@ export function Dashboard({
                 {mockRecommendations.map((rec) => (
                   <Card
                     key={rec.id}
-                    className="flex-shrink-0 w-44 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
+                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
                   >
-                    <div className="relative h-24 bg-muted overflow-hidden">
+                    <div className="relative h-20 bg-muted overflow-hidden">
                       <img
                         src={rec.image}
                         alt={rec.name}
@@ -195,9 +195,9 @@ export function Dashboard({
                 {attractions.map((attraction) => (
                   <Card
                     key={attraction.id}
-                    className="flex-shrink-0 w-44 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
+                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
                   >
-                    <div className="relative h-24 bg-muted overflow-hidden">
+                    <div className="relative h-20 bg-muted overflow-hidden">
                       <img
                         src={attraction.image}
                         alt={attraction.name}
@@ -234,9 +234,9 @@ export function Dashboard({
                 {restaurants.map((restaurant) => (
                   <Card
                     key={restaurant.id}
-                    className="flex-shrink-0 w-44 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
+                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
                   >
-                    <div className="relative h-24 bg-muted overflow-hidden">
+                    <div className="relative h-20 bg-muted overflow-hidden">
                       <img
                         src={restaurant.image}
                         alt={restaurant.name}

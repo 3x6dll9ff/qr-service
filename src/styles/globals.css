@@ -185,6 +185,16 @@
     display: none;
   }
 
+  /* Скрытие скроллбара для ScrollArea */
+  [data-radix-scroll-area-viewport] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Оптимизация для touch устройств */
   @media (hover: none) and (pointer: coarse) {
     .hover\:bg-accent:hover {
