@@ -53,7 +53,7 @@ export function SettingsMenu({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-0 right-0 w-full h-full bg-background z-50 shadow-2xl overflow-hidden"
+            className="fixed top-0 right-0 w-full h-full max-w-full max-h-full bg-background z-50 shadow-2xl overflow-hidden"
           >
             <div className="flex flex-col h-full">
           {/* Header */}

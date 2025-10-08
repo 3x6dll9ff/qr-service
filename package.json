@@ -54,7 +54,7 @@
             "wrangler": "^4.42.0"
       },
       "scripts": {
-            "dev": "vite",
+            "dev": "vite --host",
             "build": "vite build",
             "deploy": "npm run build && wrangler pages deploy",
             "preview": "wrangler pages dev ./build"

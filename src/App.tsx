@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { QRScanner } from './components/QRScanner';
-import { WelcomeScreen } from './components/WelcomeScreen';
+import { LoadingScreen } from './components/LoadingScreen';
 import { Dashboard } from './components/Dashboard';
+import { DesktopBlock } from './components/DesktopBlock';
 import { Toaster } from './components/ui/sonner';
 import { mockProperty, mockAttractions, mockRestaurants, mockServices } from './lib/mockData';
 import { Language, Theme } from './types';
+import { useIsMobile } from './hooks/useIsMobile';
 
-type Screen = 'scanner' | 'welcome' | 'dashboard';
+type Screen = 'loading' | 'dashboard';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('scanner');
-  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [currentScreen, setCurrentScreen] = useState<Screen>('loading');
   const [language, setLanguage] = useState<Language>('ru');
   const [theme, setTheme] = useState<Theme>('light');
+  const isMobile = useIsMobile();
 
   // Detect user's preferred language
   useEffect(() => {
@@ -42,14 +43,14 @@ export default function App() {
     }
   }, []);
 
-  const handleScanSuccess = (code: string) => {
-    setScannedCode(code);
-    setCurrentScreen('welcome');
-  };
+  // Автоматический переход на Dashboard после загрузки
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentScreen('dashboard');
+    }, 2000); // 2 секунды загрузки
 
-  const handleContinue = () => {
-    setCurrentScreen('dashboard');
-  };
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
@@ -59,19 +60,16 @@ export default function App() {
     setTheme(newTheme);
   };
 
+  // Если не мобильное устройство, показываем блокировочный экран
+  if (!isMobile) {
+    return <DesktopBlock language={language} />;
+  }
+
   return (
-    <div className="relative w-full h-screen bg-background">
+    <div className="relative w-full min-h-screen bg-background overflow-x-hidden">
 
-      {currentScreen === 'scanner' && (
-        <QRScanner onScanSuccess={handleScanSuccess} language={language} />
-      )}
-
-      {currentScreen === 'welcome' && (
-        <WelcomeScreen
-          property={mockProperty}
-          onContinue={handleContinue}
-          language={language}
-        />
+      {currentScreen === 'loading' && (
+        <LoadingScreen language={language} />
       )}
 
       {currentScreen === 'dashboard' && (

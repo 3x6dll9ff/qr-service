@@ -1,13 +1,16 @@
-import { MapPin, UtensilsCrossed, Car, ChevronRight, Menu } from 'lucide-react';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { ScrollArea } from './ui/scroll-area';
+import { MapPin, UtensilsCrossed, Car } from 'lucide-react';
 import { Property, Attraction, Restaurant, Service, Language, Theme } from '../types';
 import { translations } from '../lib/translations';
 import { mockRecommendations } from '../lib/mockData';
 import { SettingsMenu } from './SettingsMenu';
-import { useState } from 'react';
+import { DashboardHeader } from './dashboard/DashboardHeader';
+import { WeatherWidget } from './dashboard/WeatherWidget';
+import { WifiConnectionWidget } from './dashboard/WifiConnectionWidget';
+import { HostContactWidget } from './dashboard/HostContactWidget';
+import { CategoryGrid } from './dashboard/CategoryGrid';
+import { RecommendationsList } from './dashboard/RecommendationsList';
+import { PlacesList } from './dashboard/PlacesList';
+import { useState, useRef, useEffect } from 'react';
 
 interface DashboardProps {
   property: Property;
@@ -20,76 +23,102 @@ interface DashboardProps {
   onThemeChange: (theme: Theme) => void;
 }
 
-const categoryIcons: Record<string, any> = {
-  attractions: MapPin,
-  restaurants: UtensilsCrossed,
-  taxi: Car,
-  tours: MapPin,
-};
-
 export function Dashboard({
   property,
   attractions,
   restaurants,
-  services,
   language,
   onLanguageChange,
   theme,
   onThemeChange,
 }: DashboardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [weatherIndex, setWeatherIndex] = useState(0);
+  const [lastManualSwipe, setLastManualSwipe] = useState<number>(0);
+  const weatherCarouselRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
 
+  const widgets = [
+    { type: 'wifi' as const },
+    { type: 'contact' as const },
+    { type: 'weather' as const },
+  ];
+
+  // Auto-scroll weather carousel every 5 seconds (or 15 seconds after manual swipe)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const timeSinceManualSwipe = now - lastManualSwipe;
+      
+      // If manual swipe was less than 15 seconds ago, skip auto-scroll
+      if (lastManualSwipe > 0 && timeSinceManualSwipe < 15000) {
+        return;
+      }
+      
+      setWeatherIndex((prev) => (prev + 1) % widgets.length);
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [widgets.length, lastManualSwipe]);
+
+  // Swipe detection for weather carousel
+  useEffect(() => {
+    const el = weatherCarouselRef.current;
+    if (!el) return;
+    
+    let startX = 0;
+    let isDragging = false;
+    
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      isDragging = true;
+    };
+    
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+      
+      // Minimum swipe distance (50px)
+      if (Math.abs(diff) > 50) {
+        // Mark manual swipe timestamp
+        setLastManualSwipe(Date.now());
+        
+        if (diff > 0 && weatherIndex < widgets.length - 1) {
+          // Swipe left - next
+          setWeatherIndex(weatherIndex + 1);
+        } else if (diff < 0 && weatherIndex > 0) {
+          // Swipe right - previous
+          setWeatherIndex(weatherIndex - 1);
+        }
+      }
+      isDragging = false;
+    };
+    
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [weatherIndex, widgets.length]);
+
   const categories = [
-    {
-      id: 'attractions',
-      name: t.attractions,
-      icon: MapPin,
-      color: 'bg-blue-500',
-    },
-    {
-      id: 'restaurants',
-      name: t.restaurants,
-      icon: UtensilsCrossed,
-      color: 'bg-orange-500',
-    },
-    {
-      id: 'taxi',
-      name: t.taxi,
-      icon: Car,
-      color: 'bg-green-500',
-    },
-    {
-      id: 'tours',
-      name: t.tours,
-      icon: MapPin,
-      color: 'bg-purple-500',
-    },
+    { id: 'attractions', name: t.attractions, icon: MapPin, color: 'bg-blue-500' },
+    { id: 'restaurants', name: t.restaurants, icon: UtensilsCrossed, color: 'bg-orange-500' },
+    { id: 'taxi', name: t.taxi, icon: Car, color: 'bg-green-500' },
+    { id: 'tours', name: t.tours, icon: MapPin, color: 'bg-purple-500' },
   ];
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Header - Приветствие + бургер меню */}
-      <div className="bg-card border-b border-border flex-shrink-0 z-10">
-        <div className="w-full px-3 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-sm">{t.welcome}</p>
-              <h2 className="text-primary text-lg truncate">{property.city}</h2>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMenuOpen(true)}
-              className="hover:bg-accent h-10 w-10 p-0 flex-shrink-0"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        welcome={t.welcome}
+        city={property.city}
+        onMenuClick={() => setIsMenuOpen(true)}
+      />
 
-      {/* Settings Menu */}
       <SettingsMenu
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
@@ -100,163 +129,88 @@ export function Dashboard({
         contactPhone={property.hostContact}
       />
 
-      <ScrollArea className="flex-1 overflow-hidden">
-        <div className="w-full px-3 py-4 space-y-5 pb-6">
-          {/* Weather Widget */}
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 border-0 rounded-xl">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-white/80 text-xs font-medium">Погода</p>
-                <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-2xl">☀️</span>
-                  <span className="text-xl font-medium">24°C</span>
-                </div>
-                <p className="text-white/80 mt-1 text-xs">Podgorica</p>
+      <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {/* Weather Carousel */}
+        <div
+          ref={weatherCarouselRef}
+          className="relative overflow-hidden"
+        >
+          <div 
+            className="flex"
+            style={{ 
+              transform: `translateX(-${weatherIndex * 100}%)`,
+              transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            {widgets.map((widget, idx) => (
+              <div key={idx} className="w-full flex-shrink-0">
+                {widget.type === 'wifi' && (
+                  <WifiConnectionWidget
+                    ssid="Guest WiFi"
+                    password="welcome123"
+                  />
+                )}
+                {widget.type === 'contact' && (
+                  <HostContactWidget
+                    hostName={property.hostName || "Владелец"}
+                    phone={property.hostContact}
+                    email={property.hostEmail}
+                  />
+                )}
+                {widget.type === 'weather' && (
+                  <WeatherWidget
+                    city={property.city}
+                    address={property.address}
+                    weatherLabel={t.weather}
+                  />
+                )}
               </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-white/80 text-xs font-medium">Sunčano</p>
-                <p className="text-white/80 text-xs mt-1">💧 42%</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Блок с категориями */}
-          <div className="space-y-3">
-            <h3 className="text-foreground text-base font-medium">{t.categories}</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    className="flex flex-col items-center space-y-2 p-2.5 rounded-xl hover:bg-accent/50 transition-all active:scale-95 group"
-                  >
-                    <div className={`w-12 h-12 ${category.color} rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-200`}>
-                      <Icon className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-200" />
-                    </div>
-                    <span className="text-[10px] text-center text-foreground leading-tight break-words w-full font-medium group-hover:text-primary transition-colors duration-200">{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Блок с рекомендациями */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-foreground text-base font-medium">{t.recommendations}</h3>
-              <Button variant="ghost" size="sm" className="text-primary h-7 px-2 text-xs font-medium">
-                {t.viewAll}
-              </Button>
-            </div>
-            <div className="overflow-x-auto overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <div className="flex space-x-3 pb-1">
-                {mockRecommendations.map((rec) => (
-                  <Card
-                    key={rec.id}
-                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
-                  >
-                    <div className="relative h-20 bg-muted overflow-hidden">
-                      <img
-                        src={rec.image}
-                        alt={rec.name}
-                        className="w-full h-full object-cover"
-                      />
-                      {rec.badge && (
-                        <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground border-0 text-[9px] px-2 py-0.5 font-medium rounded-md shadow-sm">
-                          {rec.badge}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="p-2.5">
-                      <h4 className="line-clamp-1 text-xs font-medium">{rec.name}</h4>
-                      <p className="text-muted-foreground line-clamp-1 text-[10px] mt-0.5">{rec.description}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Куда можно прогуляться - Достопримечательности */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center space-x-2 min-w-0 flex-1">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                <h3 className="text-foreground text-sm font-medium truncate">{t.placesToWalk}</h3>
-              </div>
-              <Button variant="ghost" size="sm" className="text-primary h-7 px-2 text-[10px] flex-shrink-0 font-medium">
-                {t.viewAll}
-                <ChevronRight className="w-3 h-3 ml-0.5" />
-              </Button>
-            </div>
-            <div className="overflow-x-auto overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <div className="flex space-x-3 pb-1">
-                {attractions.map((attraction) => (
-                  <Card
-                    key={attraction.id}
-                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
-                  >
-                    <div className="relative h-20 bg-muted overflow-hidden">
-                      <img
-                        src={attraction.image}
-                        alt={attraction.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground border-0 text-[9px] px-2 py-0.5 font-medium rounded-md shadow-sm">
-                        {attraction.distance}
-                      </Badge>
-                    </div>
-                    <div className="p-2.5">
-                      <h4 className="line-clamp-1 text-xs font-medium">{attraction.name}</h4>
-                      <p className="text-muted-foreground line-clamp-1 text-[10px] mt-0.5">{attraction.description}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Где можно поесть - Рестораны */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center space-x-2 min-w-0 flex-1">
-                <UtensilsCrossed className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                <h3 className="text-foreground text-sm font-medium truncate">{t.whereToEat}</h3>
-              </div>
-              <Button variant="ghost" size="sm" className="text-primary h-7 px-2 text-[10px] flex-shrink-0 font-medium">
-                {t.viewAll}
-                <ChevronRight className="w-3 h-3 ml-0.5" />
-              </Button>
-            </div>
-            <div className="overflow-x-auto overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <div className="flex space-x-3 pb-1">
-                {restaurants.map((restaurant) => (
-                  <Card
-                    key={restaurant.id}
-                    className="flex-shrink-0 w-36 p-0 overflow-hidden hover:shadow-md transition-all active:scale-95 cursor-pointer rounded-lg"
-                  >
-                    <div className="relative h-20 bg-muted overflow-hidden">
-                      <img
-                        src={restaurant.image}
-                        alt={restaurant.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground border-0 text-[9px] px-2 py-0.5 font-medium rounded-md shadow-sm">
-                        {restaurant.distance}
-                      </Badge>
-                    </div>
-                    <div className="p-2.5">
-                      <h4 className="line-clamp-1 text-xs font-medium">{restaurant.name}</h4>
-                      <p className="text-muted-foreground line-clamp-1 text-[10px] mt-0.5">{restaurant.cuisine}</p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-      </ScrollArea>
+
+        <div className="flex justify-center items-center gap-3 py-2">
+          {widgets.map((_, idx) => (
+            <div
+              key={idx}
+              style={{
+                width: idx === weatherIndex ? '12px' : '10px',
+                height: idx === weatherIndex ? '12px' : '10px',
+                backgroundColor: idx === weatherIndex ? '#3B82F6' : '#9CA3AF',
+                borderRadius: '50%',
+                transition: 'all 0.3s ease'
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="w-full max-w-[100vw] px-3 space-y-6 pb-8">
+          <CategoryGrid categories={categories} title={t.categories} />
+
+          <RecommendationsList
+            recommendations={mockRecommendations}
+            title={t.recommendations}
+            viewAllLabel={t.viewAll}
+          />
+
+          <PlacesList
+            places={attractions}
+            title={t.placesToWalk}
+            icon={MapPin}
+            viewAllLabel={t.viewAll}
+            type="attraction"
+          />
+
+          <PlacesList
+            places={restaurants}
+            title={t.whereToEat}
+            icon={UtensilsCrossed}
+            iconColor="text-orange-600"
+            viewAllLabel={t.viewAll}
+            type="restaurant"
+          />
+        </div>
+      </div>
     </div>
   );
 }

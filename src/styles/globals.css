@@ -185,6 +185,16 @@
     display: none;
   }
 
+  /* Скрытие скроллбара для горизонтального скролла */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* Скрытие скроллбара для ScrollArea */
   [data-radix-scroll-area-viewport] {
     scrollbar-width: none;
@@ -323,6 +333,8 @@
     }
   }
 }
+
+ 
 
 html {
   font-size: var(--font-size);
