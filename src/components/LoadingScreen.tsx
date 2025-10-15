@@ -1,4 +1,5 @@
-import { QrCode } from 'lucide-react';
+import Lottie from 'lottie-react';
+import loadingAnimation from '../assets/lottie/loading.json';
 
 interface LoadingScreenProps {
   language: 'ru' | 'en' | 'me';
@@ -8,33 +9,41 @@ export function LoadingScreen({ language }: LoadingScreenProps) {
   const messages = {
     ru: {
       title: 'QR Service',
-      subtitle: 'Загрузка приложения...'
+      subtitle: 'Приложение загружается',
+      waitText: 'Подождите немного'
     },
     en: {
       title: 'QR Service',
-      subtitle: 'Loading application...'
+      subtitle: 'Application is loading',
+      waitText: 'Please wait a moment'
     },
     me: {
       title: 'QR Service',
-      subtitle: 'Učitavanje aplikacije...'
+      subtitle: 'Aplikacija se učitava',
+      waitText: 'Sačekajte malo'
     }
   };
 
   const t = messages[language];
 
   return (
-    <div className="min-h-screen max-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-4 overflow-hidden">
-      <div className="text-center text-white">
-        <div className="w-20 h-20 bg-white/10 backdrop-blur-lg rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg">
-          <QrCode className="w-10 h-10 text-white animate-pulse" />
+    <div className="min-h-screen max-h-screen bg-white flex items-center justify-center p-4 overflow-hidden">
+      <div className="text-center text-gray-900">
+        <div className="w-32 h-32 mx-auto mb-2">
+          <Lottie 
+            animationData={loadingAnimation}
+            loop={true}
+            autoplay={true}
+            style={{ width: '100%', height: '100%' }}
+          />
         </div>
         
-        <h1 className="text-2xl font-bold mb-2">
-          {t.title}
-        </h1>
-        
-        <p className="text-white/80">
+        <p className="text-gray-900 text-xl font-extrabold mb-2" style={{ fontWeight: '900' }}>
           {t.subtitle}
+        </p>
+        
+        <p className="text-gray-900 font-bold">
+          {t.waitText}
         </p>
       </div>
     </div>

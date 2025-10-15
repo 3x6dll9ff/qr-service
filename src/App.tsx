@@ -43,13 +43,26 @@ export default function App() {
     }
   }, []);
 
-  // Автоматический переход на Dashboard после загрузки
+  // Загрузка приложения
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCurrentScreen('dashboard');
-    }, 2000); // 2 секунды загрузки
+    const loadApp = async () => {
+      try {
+        // Имитация загрузки данных
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Здесь можно добавить реальную загрузку данных
+        // await loadUserData();
+        // await loadAppConfig();
+        
+        setCurrentScreen('dashboard');
+      } catch (error) {
+        console.error('Ошибка загрузки приложения:', error);
+        // В случае ошибки все равно переходим на dashboard
+        setCurrentScreen('dashboard');
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadApp();
   }, []);
 
   const handleLanguageChange = (lang: Language) => {
