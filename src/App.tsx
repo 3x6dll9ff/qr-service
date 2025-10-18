@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { LoadingScreen } from './components/LoadingScreen';
-import { Dashboard } from './components/Dashboard';
 import { DesktopBlock } from './components/DesktopBlock';
+import { BottomTabBarPortal } from './components/BottomTabBarPortal';
 import { Toaster } from './components/ui/sonner';
 import { mockProperty, mockAttractions, mockRestaurants, mockServices } from './lib/mockData';
 import { Language, Theme } from './types';
 import { useIsMobile } from './hooks/useIsMobile';
+import { usePerformanceOptimization } from './hooks/usePerformanceOptimization';
+import { Dashboard } from './components/Dashboard';
 
 type Screen = 'loading' | 'dashboard';
 
@@ -14,6 +16,14 @@ export default function App() {
   const [language, setLanguage] = useState<Language>('ru');
   const [theme, setTheme] = useState<Theme>('light');
   const isMobile = useIsMobile();
+  
+  // Инициализация оптимизаций производительности
+  usePerformanceOptimization({
+    enableVirtualScrolling: true,
+    enableImageLazyLoading: true,
+    enablePreloading: true,
+    enableServiceWorker: true,
+  });
 
   // Detect user's preferred language
   useEffect(() => {
@@ -79,26 +89,41 @@ export default function App() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-background overflow-x-hidden">
+    <>
+      {/* Основной контент */}
+      <div className="relative w-full min-h-screen bg-background overflow-x-hidden">
 
-      {currentScreen === 'loading' && (
-        <LoadingScreen language={language} />
-      )}
+        {currentScreen === 'loading' && (
+          <LoadingScreen language={language} />
+        )}
 
+        {currentScreen === 'dashboard' && (
+          <Dashboard
+            property={mockProperty}
+            attractions={mockAttractions}
+            restaurants={mockRestaurants}
+            services={mockServices}
+            language={language}
+            onLanguageChange={handleLanguageChange}
+            theme={theme}
+            onThemeChange={handleThemeChange}
+          />
+        )}
+
+        <Toaster />
+      </div>
+
+      {/* Тапбар через Portal - рендерится в body, минуя все контейнеры */}
       {currentScreen === 'dashboard' && (
-        <Dashboard
-          property={mockProperty}
-          attractions={mockAttractions}
-          restaurants={mockRestaurants}
-          services={mockServices}
+        <BottomTabBarPortal
           language={language}
-          onLanguageChange={handleLanguageChange}
-          theme={theme}
-          onThemeChange={handleThemeChange}
+          phoneNumber={mockProperty.hostContact}
+          onSettingsClick={() => {
+            document.dispatchEvent(new CustomEvent('open-settings-menu'));
+          }}
+          showSettings
         />
       )}
-
-      <Toaster />
-    </div>
+    </>
   );
 }

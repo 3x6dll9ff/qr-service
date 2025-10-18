@@ -124,9 +124,8 @@
     @apply border-border outline-ring/50;
   }
 
-  html, body {
+  html {
     overflow-x: hidden;
-    position: fixed;
     width: 100%;
     height: 100%;
     -webkit-overflow-scrolling: touch;
@@ -138,22 +137,57 @@
     @apply bg-background text-foreground;
     margin: 0;
     padding: 0;
+    /* НЕ устанавливаем height: 100% чтобы не ломать position: fixed */
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Safe area для мобильных устройств */
+  /* Root контейнер НЕ должен создавать containing block для fixed элементов */
+  #root {
+    min-height: 100vh;
+    /* НЕ используем transform, perspective, filter - они создают containing block */
+    /* НЕ используем overflow: hidden - он создает containing block */
+    position: relative;
+  }
+
+  /* Safe area для мобильных устройств - БЕЗ padding-bottom! */
   @supports (padding: env(safe-area-inset-top)) {
     body {
       padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+      /* padding-bottom убран - тапбар сам обрабатывает safe-area */
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
     }
   }
 
+  /* Мобильная оптимизация - фиксированная ширина */
+  @media (min-width: 768px) {
+    body {
+      max-width: 430px;
+      margin: 0 auto;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  /* Safe area для bottom tab bar */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   /* Минимальные размеры для touch targets */
-  button, a, [role="button"] {
+  button, a, [role="button"], input[type="button"], input[type="submit"] {
     min-height: 44px;
     min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Улучшенные touch targets для мобильных */
+  @media (max-width: 768px) {
+    button, a, [role="button"] {
+      min-height: 48px;
+      min-width: 48px;
+    }
   }
 
   /* Убираем выделение текста на мобильных */
@@ -179,6 +213,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    will-change: scroll-position;
   }
 
   .overflow-y-auto::-webkit-scrollbar {
@@ -226,10 +261,45 @@
     font-size: 16px;
   }
 
-  /* Улучшенная производительность */
-  * {
+  /* Оптимизация без разрушения stacking context */
+  /* Не применяем translateZ(0) глобально, чтобы не ломать z-index и fixed */
+  .gpu-hint {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+  }
+
+  /* Accessibility улучшения */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Улучшенная видимость фокуса */
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Улучшенный контраст для текста */
+  @media (prefers-contrast: high) {
+    .text-muted-foreground {
+      color: var(--foreground) !important;
+    }
+  }
+
+  /* Улучшенная читаемость */
+  @media (prefers-contrast: high) {
+    .bg-gray-50 {
+      background-color: white !important;
+    }
+    .border-gray-200 {
+      border-color: black !important;
+    }
   }
 
   /* Улучшенная типографика для мобильных */
@@ -338,4 +408,192 @@
 
 html {
   font-size: var(--font-size);
+}
+
+/* Дополнительные мобильные оптимизации */
+@layer utilities {
+  /* Улучшенные анимации для мобильных */
+  .animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Улучшенные тени для мобильных */
+  .shadow-mobile {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-mobile-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Улучшенные скругления */
+  .rounded-mobile {
+    border-radius: 16px;
+  }
+
+  .rounded-mobile-lg {
+    border-radius: 24px;
+  }
+
+  /* Улучшенные отступы для мобильных */
+  .p-mobile {
+    padding: 16px;
+  }
+
+  .px-mobile {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .py-mobile {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  /* Улучшенные размеры шрифтов для мобильных */
+  .text-mobile-xs {
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .text-mobile-sm {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .text-mobile-base {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .text-mobile-lg {
+    font-size: 18px;
+    line-height: 28px;
+  }
+
+  .text-mobile-xl {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  /* Улучшенные размеры для кнопок */
+  .btn-mobile {
+    min-height: 48px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 12px;
+  }
+
+  .btn-mobile-sm {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .btn-mobile-lg {
+    min-height: 56px;
+    padding: 16px 32px;
+    font-size: 18px;
+    border-radius: 16px;
+  }
+}
+
+/* Keyframes для анимаций */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Улучшенные медиа-запросы для различных устройств */
+@media (max-width: 320px) {
+  .px-mobile {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  
+  .text-mobile-base {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .px-mobile {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* Улучшенная поддержка темной темы */
+@media (prefers-color-scheme: dark) {
+  .shadow-mobile {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .shadow-mobile-lg {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Улучшенная поддержка landscape ориентации */
+@media (orientation: landscape) and (max-height: 500px) {
+  .py-mobile {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  
+  .btn-mobile {
+    min-height: 40px;
+    padding: 8px 16px;
+  }
 }

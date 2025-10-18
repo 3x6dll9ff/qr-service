@@ -1,0 +1,18 @@
+{
+  "name": "QR Service - Guest Portal",
+  "short_name": "QR Service",
+  "description": "Мобильный портал для гостей с информацией о недвижимости и местных достопримечательностях",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#0066FF",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "ru",
+  "categories": ["travel", "lifestyle", "utilities"],
+  "icons": [],
+  "screenshots": [],
+  "shortcuts": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

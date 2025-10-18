@@ -54,6 +54,8 @@ export const translations = {
     hostContact: 'Связь с арендодателем',
     extendStay: 'Продлить проживание',
     askQuestion: 'Задать вопрос',
+    callUs: 'Позвонить нам',
+    writeUs: 'Написать нам',
   },
   en: {
     welcome: 'Welcome',
@@ -110,6 +112,8 @@ export const translations = {
     hostContact: 'Contact Host',
     extendStay: 'Extend Stay',
     askQuestion: 'Ask a Question',
+    callUs: 'Call Us',
+    writeUs: 'Write Us',
   },
   me: {
     welcome: 'Dobrodošli',
@@ -166,5 +170,7 @@ export const translations = {
     hostContact: 'Kontakt sa vlasnikom',
     extendStay: 'Produži boravak',
     askQuestion: 'Postavi pitanje',
+    callUs: 'Pozovi nas',
+    writeUs: 'Piši nam',
   },
 };

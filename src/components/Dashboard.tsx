@@ -3,14 +3,15 @@ import { Property, Attraction, Restaurant, Service, Language, Theme } from '../t
 import { translations } from '../lib/translations';
 import { mockRecommendations } from '../lib/mockData';
 import { SettingsMenu } from './SettingsMenu';
-import { DashboardHeader } from './dashboard/DashboardHeader';
 import { WeatherWidget } from './dashboard/WeatherWidget';
 import { WifiConnectionWidget } from './dashboard/WifiConnectionWidget';
 import { HostContactWidget } from './dashboard/HostContactWidget';
 import { CategoryGrid } from './dashboard/CategoryGrid';
 import { RecommendationsList } from './dashboard/RecommendationsList';
 import { PlacesList } from './dashboard/PlacesList';
+import { MobileContainer, MobileContent } from './MobileContainer';
 import { useState, useRef, useEffect } from 'react';
+import { useMobileGestures, useMobileAnimations } from '../hooks/useMobileGestures';
 
 interface DashboardProps {
   property: Property;
@@ -37,6 +38,27 @@ export function Dashboard({
   const [lastManualSwipe, setLastManualSwipe] = useState<number>(0);
   const weatherCarouselRef = useRef<HTMLDivElement>(null);
   const t = translations[language];
+
+  // Анимации для компонентов
+  const { elementRef: carouselRef, slideInFromBottom: slideInCarousel } = useMobileAnimations();
+  const { elementRef: contentRef, fadeIn: fadeInContent } = useMobileAnimations();
+
+  // Жесты для карусели погоды
+  const gestureRef = useMobileGestures({
+    onSwipeLeft: () => {
+      if (weatherIndex < widgets.length - 1) {
+        setWeatherIndex(weatherIndex + 1);
+        setLastManualSwipe(Date.now());
+      }
+    },
+    onSwipeRight: () => {
+      if (weatherIndex > 0) {
+        setWeatherIndex(weatherIndex - 1);
+        setLastManualSwipe(Date.now());
+      }
+    },
+    threshold: 30,
+  });
 
   const widgets = [
     { type: 'wifi' as const },
@@ -111,13 +133,26 @@ export function Dashboard({
     { id: 'tours', name: t.tours, icon: MapPin, color: 'bg-purple-500' },
   ];
 
+  // Слушатель глобального события открытия настроек (из App -> BottomTabBarPortal)
+  useEffect(() => {
+    const open = () => setIsMenuOpen(true);
+    document.addEventListener('open-settings-menu', open as EventListener);
+    return () => document.removeEventListener('open-settings-menu', open as EventListener);
+  }, []);
+
+  // Запуск анимаций при монтировании
+  useEffect(() => {
+    const timer1 = setTimeout(() => slideInCarousel(500), 200);
+    const timer2 = setTimeout(() => fadeInContent(600), 300);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [slideInCarousel, fadeInContent]);
+
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      <DashboardHeader
-        welcome={t.welcome}
-        city={property.city}
-        onMenuClick={() => setIsMenuOpen(true)}
-      />
+    <MobileContainer className="h-screen flex flex-col">
 
       <SettingsMenu
         isOpen={isMenuOpen}
@@ -129,10 +164,15 @@ export function Dashboard({
         contactPhone={property.hostContact}
       />
 
-      <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <MobileContent>
         {/* Weather Carousel */}
         <div
-          ref={weatherCarouselRef}
+          ref={(el) => {
+            weatherCarouselRef.current = el;
+            if (el && gestureRef.current) {
+              gestureRef.current = el;
+            }
+          }}
           className="relative overflow-hidden"
         >
           <div 
@@ -184,7 +224,7 @@ export function Dashboard({
           ))}
         </div>
 
-        <div className="w-full max-w-[100vw] px-3 space-y-6 pb-8">
+        <div ref={contentRef} className="w-full px-4 space-y-6">
           <CategoryGrid categories={categories} title={t.categories} />
 
           <RecommendationsList
@@ -210,7 +250,9 @@ export function Dashboard({
             type="restaurant"
           />
         </div>
-      </div>
-    </div>
+      </MobileContent>
+
+      {/* BottomTabBar теперь монтируется глобально в App */}
+    </MobileContainer>
   );
 }
